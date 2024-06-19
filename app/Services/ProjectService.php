@@ -25,7 +25,7 @@ class ProjectService
                 $images = json_decode($project->images, true);
                 // Add the image URLs to the project's images array
                 $project->images = Arr::map($images, function ($image) {
-                    return asset('storage/' . $image);
+                    return asset('public/.storage/' . $image);
                 });
             }
         }
