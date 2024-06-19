@@ -66,8 +66,18 @@ class ProjectService
     public function show($id)
     {
         $project = $this->read($id);
+
+        if ($project->images) {
+            $images = json_decode($project->images, true);
+            // Add the image URLs to the project's images array
+            $project->images = Arr::map($images, function ($image) {
+                return asset('public/storage/' . $image);
+            });
+        }
+
         return response()->json($project);
     }
+
 
     public function update(Request $request, $id)
     {
