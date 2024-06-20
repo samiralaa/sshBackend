@@ -7,6 +7,8 @@ use App\Traits\CrudTrait;
 use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
 use App\Traits\ImageUploadTrait;
+use App\Models\ProjectTeacnolagy;
+
 class ProjectService
 {
     use CrudTrait, ImageUploadTrait;
@@ -17,21 +19,22 @@ class ProjectService
 
     public function index()
     {
-        $projects = $this->getModel()->all();
+        $projects = $this->getModel()->with('projectTeacnologes')->get();
 
         // Iterate through projects to add image URLs to each project
         foreach ($projects as $project) {
             if ($project->images) {
                 $images = json_decode($project->images, true);
                 // Add the image URLs to the project's images array
-                $project->images = Arr::map($images, function ($image) {
+                $project->images = collect($images)->map(function ($image) {
                     return asset('public/storage/' . $image);
-                });
+                })->toArray();
             }
         }
 
-        return $projects;
+        return response()->json($projects);
     }
+
 
     public function store(Request $request)
     {
@@ -58,22 +61,44 @@ class ProjectService
         // Create the project
         $project = $this->getModel()->create($data);
 
+        if ($request->has('technologies')) {
+
+            foreach ($request->technologies as $tech) {
+                ProjectTeacnolagy::create([
+                    'project_id' => $project->id,
+                    'technology' => $tech,
+                ]);
+            }
+        }
         return $project;
     }
-
 
 
     public function show($id)
     {
         $project = $this->read($id);
 
+        if ($project->projectTeacnologes) {
+            $project_technologies = $project->projectTeacnologes->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'project_id' => $item->project_id,
+                    'technology' => $item->technology,
+                ];
+            });
+        } else {
+            $project_technologies = [];
+        }
+
         if ($project->images) {
             $images = json_decode($project->images, true);
             // Add the image URLs to the project's images array
-            $project->images = Arr::map($images, function ($image) {
+            $project->images = collect($images)->map(function ($image) {
                 return asset('public/storage/' . $image);
-            });
+            })->toArray();
         }
+
+        $project->project_teacnologes = $project_technologies;
 
         return response()->json($project);
     }

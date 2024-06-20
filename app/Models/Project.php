@@ -30,4 +30,8 @@ class Project extends Model
         'status',
         'type',
     ];
+    public function projectTeacnologes() // Corrected to camelCase
+    {
+        return $this->hasMany(ProjectTeacnolagy::class, 'project_id');
+    }
 }
